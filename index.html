@@ -61,13 +61,6 @@
         let id = param.get('fbclid');
         let idApply = param.get('id');
         
-        // ฟังก์ชันสร้าง URL ที่ไม่มี Cache (Bypass Cache)
-        function getNoCacheUrl(baseUrl, params = "") {
-            let sep = baseUrl.includes('?') ? '&' : '?';
-            // เติม t=[timestamp] เพื่อให้ URL ไม่ซ้ำกันในแต่ละครั้งที่โหลด
-            return baseUrl + params;
-        }
-
         /* ลิงก์ตายตัวของระบบรับสมัคร (regpc) ใช้ได้ทุกปี ไม่ต้องสร้างหน้าใหม่
            ปีใหม่ให้แก้ deployment เดิมใน Apps Script เป็นเวอร์ชันใหม่ (Manage deployments > แก้ไข > เวอร์ชันใหม่)
            /exec ด้านล่างจึงเหมือนเดิมตลอด ห้ามสร้าง New deployment เพราะจะได้ /exec ใหม่
@@ -82,12 +75,14 @@
             // กรณีเปิดจาก Facebook ให้แสดงคำแนะนำ
             preloader.style.display = 'none';
             FBloading.style.display = 'block';
-            let countDownDate = new Date(Date.now() + 15000).getTime();   	
+            let countDownDate = new Date(Date.now() + 15000).getTime();
+            let videoShown = false;
             let x = setInterval(function(){
                 let now = new Date().getTime();
                 let distance = countDownDate - now;                
                 let seconds = Math.floor((distance % (1000 * 60)) / 1000);
-                if(seconds == 13){
+                if(!videoShown && seconds <= 13 && seconds > 0){
+                    videoShown = true;
                     FBloading.innerHTML = `<iframe scrolling="auto" src="openExternalBrowser.mp4"></iframe>`
                 } else if(seconds <= 0){
                     clearInterval(x);
@@ -96,20 +91,20 @@
             }, 1000);
         
         } else if(idApply){
-            // กรณีมี ID สมัครเรียน (โหลดแบบ No Cache)
-            preloader.style.display = 'block';
+            // กรณีมี ID สมัครเรียน
+            preloader.style.display = 'flex';
             FBloading.style.display = 'none';
             
-            link.src = getNoCacheUrl(baseAppScript, passOn);   // มี ?id= อยู่ใน passOn แล้ว
+            link.src = baseAppScript + passOn;   // มี ?id= อยู่ใน passOn แล้ว
             
             link.onload = function() {
                 preloader.style.display = 'none';
                 link.style.display = 'block';
             };
         } else {
-            // กรณีเข้าหน้าแรกปกติ (โหลดแบบ No Cache)
-			 preloader.style.display = 'block';
-            link.src = getNoCacheUrl(baseAppScript, passOn);
+            // กรณีเข้าหน้าแรกปกติ
+			 preloader.style.display = 'flex';
+            link.src = baseAppScript + passOn;
             
             link.onload = function() {
 				preloader.style.display = 'none';
